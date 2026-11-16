@@ -12,7 +12,9 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const writes = () => readDb().log.filter((e) => e.method !== 'GET');
+// The request log is capped, so count writes after a marker instead of all of them
+const marker = () => readDb().log.at(-1)?.id ?? 0;
+const writesSince = (id: number) => readDb().log.filter((e) => e.id > id && e.method !== 'GET');
 const oppNamed = async (name: string) => {
   const deal = (await salesforce.listOpportunities()).find((o) => o.Name.startsWith(name));
   if (!deal) throw new Error(name);
@@ -61,10 +63,10 @@ describe('running the hand-off', () => {
 
   it('creates nothing and writes nothing when run again (R5)', async () => {
     await runHandoff();
-    const before = writes().length;
+    const before = marker();
     const summary = await runHandoff();
     expect(summary.setUp).toEqual([]);
-    expect(writes().length).toBe(before);
+    expect(writesSince(before)).toEqual([]);
   });
 
   it('sends invoices only after approval, and only once', async () => {
@@ -207,4 +209,40 @@ describe('the Slack digest', () => {
     expect(again.sent).toEqual([]);
     expect(again.unchanged).toHaveLength(7);
   });
+});
+
+describe('the Salesforce webhook', () => {
+  const deliverAll = async () => {
+    const { POST } = await import('@/app/api/webhooks/salesforce/route');
+    const { events } = await salesforce.listEvents(0);
+    for (const event of events) {
+      const response = await POST(
+        new Request('http://localhost/api/webhooks/salesforce', {
+          method: 'POST',
+          body: JSON.stringify(event),
+        }),
+      );
+      expect(response.status).toBe(202);
+    }
+  };
+
+  it('sets up the same deals as the button, from this week’s 21 events', async () => {
+    await deliverAll();
+    const db = readDb();
+    expect(db.kleer.invoices.filter((i) => i.status === 'draft')).toHaveLength(6);
+    // Halden's first event said 30 licenses; the deal now says 35
+    expect(db.adminApp.subscriptions.find((s) => s.id === 'SUB-502')?.seats).toBe(95);
+    // Polar Bear's closed_won event arrived before it was reopened: nothing was created
+    const polar = await oppNamed('Polar Bear Studios');
+    expect(
+      db.stripe.customers.some((c) => c.metadata.salesforce_account_id === polar.AccountId),
+    ).toBe(false);
+  }, 30_000);
+
+  it('changes nothing when the same events arrive again', async () => {
+    await deliverAll();
+    const before = marker();
+    await deliverAll();
+    expect(writesSince(before)).toEqual([]);
+  }, 30_000);
 });
