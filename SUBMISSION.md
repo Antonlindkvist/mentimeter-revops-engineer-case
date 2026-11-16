@@ -151,9 +151,14 @@ Your first prompt, pasted as you wrote it:
 > Fork https://github.com/BashamL/mentimeter-revops-engineer-case to my GitHub account with the gh
 > CLI, clone my fork, run npm install and start the app with npm run dev. Install gh if it’s
 > missing. Explain the task to me in simple terms, and what they will assess.
-> Go through this week’s 18 Closed Won deals against billing rules R1-R8 and give me a table: deal, what’s  > wrong or missing, which rule, and who must fix it.
-> Suggest 2-3 options for what to build, each with who it’s for, what it leaves out and how long it would > > take. Recommend one, but let me decide. My starting idea: build for the RevOps manager (Kim) and the reps, > where clean deals go through automatically and only problems need a human.
-> Once I’ve decided, build it in small steps, commit after each step. spawn subagents with relevant roles to > keep context clean and to delegate thr right task to the right role, for example; tester, designer, and > > other relvant roles. 
+> Go through this week’s 18 Closed Won deals against billing rules R1-R8 and give me a table: deal,
+> what’s wrong or missing, which rule, and who must fix it.
+> Suggest 2-3 options for what to build, each with who it’s for, what it leaves out and how long it
+> would take. Recommend one, but let me decide. My starting idea: build for the RevOps manager (Kim)
+> and the reps, where clean deals go through automatically and only problems need a human.
+> Once I’ve decided, build it in small steps, commit after each step. spawn subagents with relevant
+> roles to keep context clean and to delegate thr right task to the right role, for example; tester,
+> designer, and other relvant roles.
 
 
 **How I worked.** I used Claude Code. I told it the context and how I wanted to work: read
