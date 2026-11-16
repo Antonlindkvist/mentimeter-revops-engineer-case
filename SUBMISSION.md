@@ -148,31 +148,51 @@ today are *Active* and their workspace switches to the plan on the first run; la
 
 Your first prompt, pasted as you wrote it:
 
-> TODO (Anton): paste your first prompt here.
+> Fork https://github.com/BashamL/mentimeter-revops-engineer-case to my GitHub account with the gh
+> CLI, clone my fork, run npm install and start the app with npm run dev. Install gh if it’s
+> missing. Don’t change any code yet.
 
-TODO (Anton): add the build prompt as well, and say how you worked (you decided the direction
-and the ambiguous cases; the agent read the data, proposed options and built in small, tested
-commits).
+**How I worked.** I used Claude Code. I told it the context and how I wanted to work: read
+everything first, explain the task, go through all 18 deals against R1–R8, give me options, and
+let me decide. I chose the direction (Kim and the reps, clean deals automatic, problems routed to
+one person). I went through its recommendations for the ambiguous cases, accepted them, and had it
+write them into a build prompt. It built in seven small commits with tests and
+ran `npm run check` before every push. I walked through the build in the app myself, then asked it
+to double-check everything against the data before recording the demo.
 
 Something your tool suggested or built that you changed or threw away, and why:
 
-TODO (Anton). Candidates from the session:
+**It assumed an Enterprise subscription gives the customer Enterprise.** The first build created
+the subscription in the admin app and stopped there. But a workspace's plan is a separate field:
+new workspaces stayed on Free, and Nordlys stayed on Pro, even with an Active Enterprise
+subscription. The tests passed, because they checked what the code meant to do. The double-check
+found it by comparing the result with the admin app's data. I changed the design instead of
+patching it: the hand-off now switches the workspace's plan on the start date (Lea's "day one"),
+and only after billing is set up (Tom's "bill first").
 
-- Its first pass found 17 deals, not 18. Polar Bear was reopened and only shows up in the event
-  feed. That's why the hand-off reads the event feed as well as the opportunities, and always
-  judges the deal as it is now.
-- Judging a deal again after the run would have seen the hand-off's own new subscriptions as R7
-  conflicts (and Halden's 95 seats as wrong). It was caught during design: the ledger now keeps
-  the plan a deal started with, and flags later Salesforce edits instead.
-- The Playwright browser server in the session couldn't connect, so the in-app checks and the
-  demo video use a local Playwright install instead.
-- An idempotency test failed because the mock request log is capped, not because of a bug. The
-  test now counts writes after a marker.
+Two smaller ones:
+
+- It wrote into this file that the Dev tools request log shows that a second run writes nothing.
+  That wasn't true: the log keeps only the last 500 requests, and the hand-off page reads about 150
+  per view, so the writes scroll out. Recording the demo caught it. I replaced it with something a
+  person can check: the run now says "nothing new", and Kleer still has six invoices. The tests
+  count the write calls.
+- Its first query found 17 Closed Won deals, not 18. It noticed that the 18th was reopened and only
+  shows up in the event feed. That's why the hand-off reads the events and judges every deal as it
+  is now.
 
 Roughly where you spent your time:
 
-TODO (Anton).
+About 4 hours:
+
+- ~15 min: forking and setting up (Node had to be upgraded)
+- ~15 min: reading the case with the agent's walkthrough of the 18 deals, and choosing what to
+  build
+- ~30 min: building it in seven small, tested commits
+- ~25 min: walking through the build myself, and the fixes from the double-check
+- ~2 h: the demo video: recording it, checking it frame by frame, and the two fixes it found
+- ~30 min: the voice-over and this file
 
 ## Video
 
-Link: TODO (Anton)
+Link: VIDEO_LINK_HERE
