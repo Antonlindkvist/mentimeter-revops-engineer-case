@@ -31,13 +31,13 @@ blocked**, each with a named owner, and **1 is skipped** (Polar Bear, reopened).
 
 **Who it's for.** Kim said: "If someone still has to click 50 buttons for every deal, we've moved
 the copying, not removed it" and "I don't want to be the person who relays every problem."
-Priya doesn't want another form before she can close. So reps close as they do today, the
+Priya doesn't want another form before closing. So reps close as they do today, and the
 system catches problems after Closed Won and routes each one to the person who can fix it.
 
 **Where people disagreed:**
 
 - **Maja vs Kim (every invoice vs no clicking).** Invoices are drafted automatically, and Maja
-  sends them all with one click after looking at them. She sees every invoice before it reaches
+  sends them all with one click after looking at them. Every invoice is seen before it reaches
   a customer, and nobody copies anything.
 - **Tom vs Lea (bill first vs workspace on day one).** Both, in order. Nothing is created for a
   blocked deal, and billing is set up before the subscription. A failed card payment stops the
@@ -80,7 +80,7 @@ system catches problems after Closed Won and routes each one to the person who c
 | R2 currency | No rates were given, so I used fixed planning rates in `config.ts`. No card deal this week is near the limit in another currency, so the rates change no outcome. |
 | R4 VAT format | Kleer accepts any text, so a malformed VAT ID would get 0% VAT on an invalid number. I check the country prefix plus 8–12 characters (Arcadia's "FR 12 3456" fails). |
 | Invoice email | From the account's `Invoice_Email__c`, not the billing contact. Contact emails in the data have spaces and accents. |
-| Invoice references | "Your reference" is the billing contact. "Our reference" is Maja (billing), like every earlier invoice in Kleer, since PO and VAT questions go to her. |
+| Invoice references | "Your reference" is the billing contact. "Our reference" is Maja (billing), like every earlier invoice in Kleer, since PO and VAT questions go to Maja. |
 | Self-service workspaces | Matched by the account's domain and linked instead of duplicated (Kessler, Corvid). Two matches (Helix) is a decision for the rep. |
 | Decisions not mine to make | Maris (CHF account, EUR deal, no CHF price list), Quill & Ink (contract starts before it closed), Sable & Finch (replace or extend a live card subscription whose card has expired) and Helix (which workspace) are blocked with a named owner, not guessed. |
 
@@ -95,8 +95,8 @@ system catches problems after Closed Won and routes each one to the person who c
 
 ## Before it goes live
 
-- **Maja:** is one batch "send" click enough review, or does she want to approve invoice by
-  invoice? Is cent-rounding the prorated unit price acceptable? Changing either is a small
+- **Maja:** is one batch "send" click enough review, or should invoices be approved one by
+  one? Is cent-rounding the prorated unit price acceptable? Changing either is a small
   change to the gated steps.
 - **Finance, on Quill & Ink:** may we invoice a contract backdated to a trial start? And on
   Maris: CHF or EUR? Both could become rules instead of decisions.
@@ -120,8 +120,9 @@ system catches problems after Closed Won and routes each one to the person who c
 3. Click **Stop 1 old subscription renewing** (Nordlys, R7), then **Send 6 invoices**.
 4. Click **Send Slack digest**, then open *Slack*: one DM per owner and a summary in
    `#finance-billing`. Click it again: nothing new is sent.
-5. Click **Run hand-off** again: nothing is created. The request log on *Dev tools* shows no new
-   writes.
+5. Click **Run hand-off** again: the line under the button says *nothing new*, and *Kleer* still
+   has the same six invoices. (The request log on *Dev tools* keeps only the last 500 requests and
+   this page reads a lot, so it isn't a reliable place to check. The tests count the writes.)
 6. Alternatively, from a reset: *Dev tools* → **Send all 21 to webhook**. You get the same result
    from the events.
 
