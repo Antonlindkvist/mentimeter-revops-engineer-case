@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/lib/format';
 import { type DealView, type Group, loadBoard } from '@/lib/handoff/board';
 import { readState } from '@/lib/handoff/ledger';
-import { runAction, sendInvoicesAction, stopRenewalsAction } from './actions';
+import { runAction, sendDigestAction, sendInvoicesAction, stopRenewalsAction } from './actions';
 import { DealCard } from './deal-card';
 
 export const metadata: Metadata = { title: 'Closed Won hand-off' };
@@ -53,9 +53,16 @@ export default async function HandoffPage() {
         description="Every deal Salesforce marked Closed Won, checked against finance's rules (R1–R8). Clean deals are set up automatically; the rest wait for the one person who can fix them."
         actions={
           <div className="flex flex-col items-end gap-1">
-            <form action={runAction}>
-              <Button type="submit">Run hand-off{toRun > 0 ? ` (${toRun} ready)` : ''}</Button>
-            </form>
+            <div className="flex gap-2">
+              <form action={sendDigestAction}>
+                <Button type="submit" variant="outline">
+                  Send Slack digest
+                </Button>
+              </form>
+              <form action={runAction}>
+                <Button type="submit">Run hand-off{toRun > 0 ? ` (${toRun} ready)` : ''}</Button>
+              </form>
+            </div>
             <span className="text-muted-foreground text-xs">
               {lastRunAt ? `Last run ${formatDateTime(lastRunAt)}` : 'Not run yet'} · safe to run
               again

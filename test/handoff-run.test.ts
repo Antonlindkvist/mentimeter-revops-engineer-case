@@ -171,3 +171,40 @@ describe('when something goes wrong', () => {
     expect(view?.evaluation.issues[0].message).toMatch(/Nothing is undone automatically/);
   });
 });
+
+describe('the Slack digest', () => {
+  it('sends each owner one message with only their deals, and finance a summary', async () => {
+    const { sendDigest } = await import('@/lib/handoff/slack');
+    await runHandoff();
+    const result = await sendDigest();
+    expect(result.failed).toEqual([]);
+    expect(result.sent.sort()).toEqual(
+      [
+        '#finance-billing',
+        'Alex Berg',
+        'Jordan Reyes',
+        'Maja Ek',
+        'Noor Haddad',
+        'Priya Shah',
+        'Sam Lind',
+      ].sort(),
+    );
+    const alex = readDb().slack.messages.filter((m) => m.channel === 'U04ALEXBRG');
+    expect(alex).toHaveLength(1);
+    expect(alex[0].text).toMatch(/3 Closed Won deals/);
+    expect(alex[0].text).toMatch(/Kessler.*\n.*R3/);
+    const finance = readDb().slack.messages.find(
+      (m) => m.channel === 'C04FINBILL' && m.text.startsWith('*Closed Won hand-off*'),
+    );
+    expect(finance?.text).toMatch(/6 invoices drafted and waiting for <@U04MAJAEK0>/);
+  });
+
+  it('does not ping anyone again when nothing changed', async () => {
+    const { sendDigest } = await import('@/lib/handoff/slack');
+    await runHandoff();
+    await sendDigest();
+    const again = await sendDigest();
+    expect(again.sent).toEqual([]);
+    expect(again.unchanged).toHaveLength(7);
+  });
+});
