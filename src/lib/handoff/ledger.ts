@@ -4,6 +4,7 @@
  * the same Salesforce event twice) skips what's already done.
  */
 import { readDb, updateDb } from '@/lib/db';
+import type { Plan } from './types';
 
 export type StepName =
   | 'workspace'
@@ -12,7 +13,6 @@ export type StepName =
   | 'stripeCustomer'
   | 'stripeSubscription'
   | 'subscription'
-  | 'accountLinks'
   | 'sendInvoice'
   | 'stopRenewal';
 
@@ -26,6 +26,10 @@ export interface StepRecord {
 
 export interface DealRecord {
   steps: Partial<Record<StepName, StepRecord>>;
+  /** The plan as it was when the hand-off started this deal, and what it was based on */
+  plan?: Plan;
+  notes?: string[];
+  fingerprint?: string;
   /** What we last wrote to Salesforce, so we only write when it changes */
   writtenBack?: string;
 }
@@ -60,6 +64,14 @@ export function recordStep(oppId: string, step: StepName, record: Omit<StepRecor
   change((state) => {
     state.deals[oppId] ??= { steps: {} };
     state.deals[oppId].steps[step] = { ...record, at: new Date().toISOString() };
+  });
+}
+
+export function recordPlan(oppId: string, plan: Plan, notes: string[], fingerprint: string) {
+  change((state) => {
+    state.deals[oppId] ??= { steps: {} };
+    if (state.deals[oppId].plan) return;
+    Object.assign(state.deals[oppId], { plan, notes, fingerprint });
   });
 }
 

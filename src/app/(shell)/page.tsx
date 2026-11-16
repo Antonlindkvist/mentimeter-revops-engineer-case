@@ -60,10 +60,10 @@ export default async function HomePage() {
           <CardContent className="grid gap-2 sm:grid-cols-3">
             {[
               {
-                href: '/your-app',
+                href: '/handoff',
                 icon: Sparkles,
-                label: 'Your app',
-                hint: 'An empty page to start from',
+                label: 'Closed Won hand-off',
+                hint: 'What can be set up, and what waits for whom',
               },
               {
                 href: '/deals',

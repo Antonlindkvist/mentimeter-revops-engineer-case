@@ -32,7 +32,7 @@ export const APP_SECTIONS: AppSection[] = [
     label: 'MentOS',
     apps: [
       { id: 'home', label: 'Home', href: '/', icon: Home },
-      { id: 'your-app', label: 'Your app', href: '/your-app', icon: Sparkles },
+      { id: 'handoff', label: 'Closed Won hand-off', href: '/handoff', icon: Sparkles },
     ],
   },
   {
