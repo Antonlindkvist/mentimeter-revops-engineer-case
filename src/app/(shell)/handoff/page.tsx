@@ -37,7 +37,7 @@ const GROUPS: { id: Group; title: string; hint: string }[] = [
 export default async function HandoffPage() {
   const board = await loadBoard();
   const byGroup = (group: Group) => board.filter((d) => d.group === group);
-  const { lastRunAt } = readState();
+  const { lastRunAt, lastRunResult } = readState();
   const waiting = (name: string) =>
     byGroup('approval').filter((d) =>
       d.steps.some((s) => s.name === name && s.record?.status !== 'done'),
@@ -64,8 +64,10 @@ export default async function HandoffPage() {
               </form>
             </div>
             <span className="text-muted-foreground text-xs">
-              {lastRunAt ? `Last run ${formatDateTime(lastRunAt)}` : 'Not run yet'} · safe to run
-              again
+              {lastRunAt
+                ? `Last run ${formatDateTime(lastRunAt)}: ${lastRunResult ?? 'done'}`
+                : 'Not run yet'}{' '}
+              · safe to run again
             </span>
           </div>
         }

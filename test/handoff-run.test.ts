@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConnectorError, kleer, salesforce } from '@/lib/connectors';
 import { readDb } from '@/lib/db';
 import { loadBoard } from '@/lib/handoff/board';
+import { readState } from '@/lib/handoff/ledger';
 import { runHandoff, sendInvoices, stopRenewals } from '@/lib/handoff/run';
 
 afterEach(() => {
@@ -29,6 +30,7 @@ describe('running the hand-off', () => {
     const summary = await runHandoff();
     expect(summary.setUp).toHaveLength(7);
     expect(summary.failed).toEqual([]);
+    expect(readState().lastRunResult).toBe('7 set up');
 
     const db = readDb();
     const drafts = db.kleer.invoices.filter((i) => i.status === 'draft');
@@ -68,6 +70,7 @@ describe('running the hand-off', () => {
     const summary = await runHandoff();
     expect(summary.setUp).toEqual([]);
     expect(writesSince(before)).toEqual([]);
+    expect(readState().lastRunResult).toBe('nothing new');
   });
 
   it('sends invoices only after approval, and only once', async () => {

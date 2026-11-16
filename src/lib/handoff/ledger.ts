@@ -40,6 +40,8 @@ export interface HandoffState {
   /** Last Slack message per recipient, so a re-run doesn't repeat it */
   slack: Record<string, string>;
   lastRunAt: string | null;
+  /** What the last run did, e.g. "7 set up" or "nothing new" */
+  lastRunResult?: string;
 }
 
 const empty = (): HandoffState => ({ deals: {}, slack: {}, lastRunAt: null });
@@ -91,9 +93,14 @@ export function recordSlack(recipient: string, text: string) {
   });
 }
 
-export function recordRun() {
+export function recordRun(result: { setUp: number; failed: number }) {
+  const parts = [
+    result.setUp > 0 ? `${result.setUp} set up` : null,
+    result.failed > 0 ? `${result.failed} failed` : null,
+  ].filter(Boolean);
   change((state) => {
     state.lastRunAt = new Date().toISOString();
+    state.lastRunResult = parts.length > 0 ? parts.join(', ') : 'nothing new';
   });
 }
 

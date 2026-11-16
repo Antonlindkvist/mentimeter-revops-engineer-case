@@ -68,7 +68,7 @@ export async function runHandoff(onlyOppId?: string): Promise<RunSummary> {
     }
     await writeBack(await loadDeal(id, shared));
   }
-  recordRun();
+  recordRun({ setUp: summary.setUp.length, failed: summary.failed.length });
   return summary;
 }
 
