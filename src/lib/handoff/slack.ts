@@ -42,7 +42,7 @@ export function buildInboxes(board: DealView[], revops: { name: string; email: s
         byOwner.set(issue.ownerEmail, entry);
       }
       for (const [email, { name, messages }] of byOwner) {
-        add(email, name, `• *${e.name}*\n    ${messages.join('\n    ')}`);
+        add(email, name, `• ${e.name}\n    ${messages.join('\n    ')}`);
       }
     }
     if (deal.group === 'failed') {
@@ -50,7 +50,7 @@ export function buildInboxes(board: DealView[], revops: { name: string; email: s
       add(
         revops.email,
         revops.name,
-        `• *${e.name}* failed at "${step?.label}": ${step?.record?.error}`,
+        `• ${e.name} failed at "${step?.label}": ${step?.record?.error}`,
       );
     }
   }
@@ -94,7 +94,7 @@ async function financeSummary(board: DealView[], mention: (email: string) => Pro
     await Promise.all([...owners].map(async ([email, n]) => `${await mention(email)} ${n}`))
   ).join(', ');
 
-  const lines = ['*Closed Won hand-off*'];
+  const lines = ['Closed Won hand-off: daily summary'];
   if (invoices.length > 0) {
     lines.push(
       `• ${invoices.length} invoice${invoices.length === 1 ? '' : 's'} drafted and waiting for ${

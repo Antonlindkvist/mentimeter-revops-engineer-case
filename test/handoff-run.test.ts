@@ -212,7 +212,7 @@ describe('the Slack digest', () => {
     expect(alex[0].text).toMatch(/3 Closed Won deals/);
     expect(alex[0].text).toMatch(/Kessler.*\n.*R3/);
     const finance = readDb().slack.messages.find(
-      (m) => m.channel === 'C04FINBILL' && m.text.startsWith('*Closed Won hand-off*'),
+      (m) => m.channel === 'C04FINBILL' && m.text.startsWith('Closed Won hand-off'),
     );
     expect(finance?.text).toMatch(/6 invoices drafted and waiting for <@U04MAJAEK0>/);
   });
