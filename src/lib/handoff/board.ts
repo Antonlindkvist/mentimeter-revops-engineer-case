@@ -16,6 +16,8 @@ export interface PlannedStep {
   label: string;
   /** Outward-facing or hard to undo: waits for a person to approve it */
   gated: boolean;
+  /** Not to be done before this date, e.g. switching the plan on at the start date */
+  notBefore?: string;
 }
 
 export interface StepView extends PlannedStep {
@@ -29,6 +31,8 @@ export interface DealView {
   closeDate: string;
   /** The billing fields as they are now, to notice changes after set-up */
   fingerprint: string;
+  /** "Today" as the systems saw it when this was judged */
+  today: string;
 }
 
 /** The fields that decide what gets billed. If they change after set-up, a human looks. */
@@ -112,6 +116,14 @@ export function planSteps(plan: Plan): PlannedStep[] {
           )} (${sub.status})`
         : `Update ${sub.subscriptionId} to ${sub.seats} seats, co-termed to ${formatDate(sub.endDate)}`,
   });
+  if (sub.action === 'create' && plan.workspacePlan) {
+    steps.push({
+      name: 'activate',
+      gated: false,
+      notBefore: sub.startDate,
+      label: `Workspace on ${plan.workspacePlan} from ${formatDate(sub.startDate)}`,
+    });
+  }
   if (plan.kleer) {
     steps.push({ name: 'sendInvoice', gated: true, label: 'Send the invoice to the customer' });
   }
@@ -128,7 +140,8 @@ export function planSteps(plan: Plan): PlannedStep[] {
  */
 export function judge(ctx: DealContext, record: DealRecord | undefined): DealView {
   let evaluation: Evaluation;
-  if (record?.plan && ctx.opp.StageName === 'Closed Won') {
+  const started = Object.values(record?.steps ?? {}).some((s) => s?.status === 'done');
+  if (record?.plan && started && ctx.opp.StageName === 'Closed Won') {
     const fresh = evaluate({ ...ctx, alreadyStarted: true });
     const changed = record.fingerprint !== undefined && record.fingerprint !== fingerprint(ctx.opp);
     const revops = ctx.users.find((u) => u.Title === 'RevOps Manager');
@@ -160,18 +173,27 @@ export function judge(ctx: DealContext, record: DealRecord | undefined): DealVie
     : [];
   return {
     evaluation,
-    group: groupOf(evaluation, steps),
+    group: groupOf(evaluation, steps, ctx.today),
     steps,
     closeDate: ctx.opp.CloseDate,
     fingerprint: fingerprint(ctx.opp),
+    today: ctx.today,
   };
 }
 
-function groupOf(evaluation: Evaluation, steps: StepView[]): Group {
+/** A step that should happen now: automatic, not done, and its date has come. */
+export function isDue(step: StepView, today: string): boolean {
+  return (
+    !step.gated && step.record?.status !== 'done' && (!step.notBefore || step.notBefore <= today)
+  );
+}
+
+function groupOf(evaluation: Evaluation, steps: StepView[], today: string): Group {
   if (evaluation.status === 'blocked') return 'blocked';
   if (evaluation.status === 'skipped') return 'skipped';
   if (steps.some((s) => s.record?.status === 'failed')) return 'failed';
-  const automatic = steps.filter((s) => !s.gated);
+  // A step scheduled for later (the start date) doesn't hold the deal back
+  const automatic = steps.filter((s) => !s.gated && !(s.notBefore && s.notBefore > today));
   if (automatic.some((s) => s.record?.status !== 'done')) return 'ready';
   if (steps.some((s) => s.gated && s.record?.status !== 'done')) return 'approval';
   return 'done';

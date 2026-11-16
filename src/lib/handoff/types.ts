@@ -115,6 +115,8 @@ export interface Plan {
   kleer: KleerStep | null;
   stripe: StripeStep | null;
   stopRenewal: StopRenewalStep | null;
+  /** The admin app workspace plan this deal gives the customer, e.g. "Enterprise" */
+  workspacePlan: string | null;
 }
 
 export type EvaluationStatus = 'ready' | 'blocked' | 'skipped';

@@ -9,8 +9,9 @@ and the reps**. Clean deals go through on their own, and only problems need a pe
   it looks in Salesforce now**.
 - **Clean deals are set up automatically.** The hand-off links the customer's existing
   self-service workspace (or creates one), creates the Kleer customer and a draft invoice (or
-  the Stripe customer and card subscription), then the admin app subscription. It writes the
-  IDs and a status back to the opportunity, so reps see what happened in Salesforce.
+  the Stripe customer and card subscription), then the admin app subscription. On the start
+  date it switches the workspace to the plan the customer bought. It writes the IDs and a
+  status back to the opportunity, so reps see what happened in Salesforce.
 - **Blocked deals create nothing.** They get the rule, a plain reason and the **one person** who
   can fix or decide it. Once it's fixed, the next run (or the next Salesforce event) sets the
   deal up.
@@ -38,10 +39,12 @@ system catches problems after Closed Won and routes each one to the person who c
 - **Maja vs Kim (every invoice vs no clicking).** Invoices are drafted automatically, and Maja
   sends them all with one click after looking at them. She sees every invoice before it reaches
   a customer, and nobody copies anything.
-- **Tom vs Lea (bill first vs workspace on day one).** I went with Tom: nothing is created for a
+- **Tom vs Lea (bill first vs workspace on day one).** Both, in order. Nothing is created for a
   blocked deal, and billing is set up before the subscription. A failed card payment stops the
-  deal before it gets a subscription. Lea's kickoff dates are why the blocked list routes
-  problems fast instead of waiting for finance to find them.
+  deal before it gets a subscription (Tom). For clean deals the workspace is switched to the
+  plan on the start date, by the first run on or after it (Lea). The admin app doesn't do this
+  itself: a new workspace stays on Free until someone changes it. For blocked deals, Lea's
+  kickoff dates are why problems go straight to the person who can fix them.
 - **Alex ("one message a day").** A daily digest, not a ping per problem. It's only sent when
   something changed.
 - **RM exemption from R3 (unsettled).** Not applied: a missing PO blocks the invoice. It doesn't
@@ -77,6 +80,7 @@ system catches problems after Closed Won and routes each one to the person who c
 | R2 currency | No rates were given, so I used fixed planning rates in `config.ts`. No card deal this week is near the limit in another currency, so the rates change no outcome. |
 | R4 VAT format | Kleer accepts any text, so a malformed VAT ID would get 0% VAT on an invalid number. I check the country prefix plus 8–12 characters (Arcadia's "FR 12 3456" fails). |
 | Invoice email | From the account's `Invoice_Email__c`, not the billing contact. Contact emails in the data have spaces and accents. |
+| Invoice references | "Your reference" is the billing contact. "Our reference" is Maja (billing), like every earlier invoice in Kleer, since PO and VAT questions go to her. |
 | Self-service workspaces | Matched by the account's domain and linked instead of duplicated (Kessler, Corvid). Two matches (Helix) is a decision for the rep. |
 | Decisions not mine to make | Maris (CHF account, EUR deal, no CHF price list), Quill & Ink (contract starts before it closed), Sable & Finch (replace or extend a live card subscription whose card has expired) and Helix (which workspace) are blocked with a named owner, not guessed. |
 
@@ -122,7 +126,11 @@ system catches problems after Closed Won and routes each one to the person who c
    from the events.
 
 Reset any time with *Dev tools* → **Reset all systems** (or `npm run db:reset`). `npm test` runs
-40 tests, including all 18 deals.
+42 tests, including all 18 deals.
+
+Dates: the mocks' "today" is your real date (never before 6 Nov 2026). Deals that start before
+today are *Active* and their workspace switches to the plan on the first run; later starts are
+*Scheduled* and switch on the start date.
 
 ## What I'd do next
 

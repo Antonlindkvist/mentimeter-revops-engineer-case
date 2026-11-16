@@ -2,7 +2,7 @@
  * Reads what the rules need about a deal, through the connectors only.
  */
 import { adminApp, kleer, salesforce, stripe } from '@/lib/connectors';
-import type { SalesforceOpportunity, Workspace } from '@/lib/systems/types';
+import type { SalesforceEvent, SalesforceOpportunity, Workspace } from '@/lib/systems/types';
 import { CASE_TODAY } from './config';
 import { hasStarted, readState } from './ledger';
 import { domainOf } from './rules';
@@ -20,10 +20,7 @@ export function systemToday(): string {
  * (so a reopened deal still shows up, as skipped).
  */
 export async function listHandoffDeals(): Promise<SalesforceOpportunity[]> {
-  const [opportunities, { events }] = await Promise.all([
-    salesforce.listOpportunities(),
-    salesforce.listEvents(0),
-  ]);
+  const [opportunities, events] = await Promise.all([salesforce.listOpportunities(), allEvents()]);
   const state = readState();
   const fromEvents = new Set(events.map((e) => e.opportunityId));
   return opportunities
@@ -34,6 +31,18 @@ export async function listHandoffDeals(): Promise<SalesforceOpportunity[]> {
         (o.StageName === 'Closed Won' && !o.Subscription_ID__c && !o.Invoice_Number__c),
     )
     .sort((a, b) => a.CloseDate.localeCompare(b.CloseDate) || a.Name.localeCompare(b.Name));
+}
+
+/** The event feed returns at most 100 events per call, oldest first. */
+async function allEvents() {
+  const events: SalesforceEvent[] = [];
+  let after = 0;
+  for (;;) {
+    const page = await salesforce.listEvents(after);
+    events.push(...page.events);
+    if (page.events.length < 100) return events;
+    after = page.events[page.events.length - 1].replayId;
+  }
 }
 
 /** Reference data shared by every deal in a run. */

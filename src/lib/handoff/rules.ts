@@ -467,7 +467,7 @@ export function evaluate(ctx: DealContext): Evaluation {
     if (expired) {
       const pastDue = ctx.stripeSubscriptions.find((s) => s.status === 'past_due');
       add(
-        'R1',
+        'Card',
         'rep',
         'fix',
         `The card on file${card ? ` (${card.brand} •••• ${card.last4}, ${card.exp_month}/${card.exp_year})` : ''} has expired${
@@ -567,7 +567,8 @@ export function evaluate(ctx: DealContext): Evaluation {
         servicePeriod: invoicePeriod,
         poNumber: opp.PO_Number__c,
         yourReference: ctx.billingContactName,
-        ourReference: owner?.Name ?? null,
+        // Like every earlier invoice: questions about POs and VAT go to billing
+        ourReference: person('finance')?.Name ?? owner?.Name ?? null,
         foreignId: opp.Id,
         paymentTermsDays: PAYMENT_TERMS_DAYS,
       },
@@ -608,6 +609,7 @@ export function evaluate(ctx: DealContext): Evaluation {
     kleer: kleerStep,
     stripe: stripeStep,
     stopRenewal,
+    workspacePlan: product && ['Pro', 'Enterprise'].includes(product.Name) ? product.Name : null,
   });
 }
 

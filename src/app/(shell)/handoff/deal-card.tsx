@@ -1,4 +1,4 @@
-import { AlertTriangle, Check, Circle, Hand, Info, X } from 'lucide-react';
+import { AlertTriangle, Check, Circle, Clock, Hand, Info, X } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { formatDate, formatMoney } from '@/lib/format';
@@ -54,7 +54,7 @@ export function DealCard({ deal }: { deal: DealView }) {
       {deal.steps.length > 0 ? (
         <ol className="flex flex-col gap-1">
           {deal.steps.map((step) => (
-            <StepRow key={step.name} step={step} />
+            <StepRow key={step.name} step={step} today={deal.today} />
           ))}
         </ol>
       ) : null}
@@ -73,9 +73,19 @@ export function DealCard({ deal }: { deal: DealView }) {
   );
 }
 
-function StepRow({ step }: { step: StepView }) {
+function StepRow({ step, today }: { step: StepView; today: string }) {
   const status = step.record?.status;
-  const Icon = status === 'done' ? Check : status === 'failed' ? X : step.gated ? Hand : Circle;
+  const later = !status && step.notBefore !== undefined && step.notBefore > today;
+  const Icon =
+    status === 'done'
+      ? Check
+      : status === 'failed'
+        ? X
+        : step.gated
+          ? Hand
+          : later
+            ? Clock
+            : Circle;
   return (
     <li className="flex flex-col">
       <div className="flex items-start gap-2">
@@ -92,6 +102,9 @@ function StepRow({ step }: { step: StepView }) {
           {step.label}
           {step.record?.ref ? (
             <span className="ml-1.5 font-mono text-xs text-foreground">{step.record.ref}</span>
+          ) : null}
+          {later ? (
+            <span className="ml-1.5 text-muted-foreground text-xs">on the start date</span>
           ) : null}
           {!status && step.gated ? (
             <span className="ml-1.5 text-amber-700 text-xs dark:text-amber-400">

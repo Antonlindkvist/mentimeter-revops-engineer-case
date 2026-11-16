@@ -13,6 +13,7 @@ export type StepName =
   | 'stripeCustomer'
   | 'stripeSubscription'
   | 'subscription'
+  | 'activate'
   | 'sendInvoice'
   | 'stopRenewal';
 
@@ -70,7 +71,9 @@ export function recordStep(oppId: string, step: StepName, record: Omit<StepRecor
 export function recordPlan(oppId: string, plan: Plan, notes: string[], fingerprint: string) {
   change((state) => {
     state.deals[oppId] ??= { steps: {} };
-    if (state.deals[oppId].plan) return;
+    // Keep the plan once something was created; before that, the latest one wins
+    const started = Object.values(state.deals[oppId].steps).some((s) => s?.status === 'done');
+    if (state.deals[oppId].plan && started) return;
     Object.assign(state.deals[oppId], { plan, notes, fingerprint });
   });
 }

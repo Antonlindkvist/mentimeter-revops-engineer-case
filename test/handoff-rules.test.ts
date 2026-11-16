@@ -173,7 +173,7 @@ describe('deals that need a decision', () => {
 
   it('Sable & Finch: overlaps a live subscription (R7) and the card has expired', async () => {
     const e = await verdict('Sable & Finch');
-    expect(rules(e)).toEqual(['R1', 'R7']);
+    expect(rules(e)).toEqual(['Card', 'R7']);
     expect(owners(e)).toEqual(['Priya Shah']);
   });
 });

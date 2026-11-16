@@ -10,6 +10,7 @@ import { runHandoff, sendInvoices, stopRenewals } from '@/lib/handoff/run';
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 // The request log is capped, so count writes after a marker instead of all of them
@@ -150,6 +151,21 @@ describe('when something goes wrong', () => {
     });
   });
 
+  it('sets up Kessler once the PO arrives, on its existing self-service workspace', async () => {
+    await runHandoff();
+    const kessler = await oppNamed('Kessler Logistik');
+    await salesforce.updateOpportunity(kessler.Id, { PO_Number__c: 'PO-55120' });
+
+    const summary = await runHandoff();
+    expect(summary.setUp).toEqual(['Kessler Logistik - New Enterprise']);
+    const db = readDb();
+    const invoice = db.kleer.invoices.find((i) => i.foreignId === kessler.Id);
+    expect(invoice).toMatchObject({ poNumber: 'PO-55120', vatRate: 0, netAmount: 26496 });
+    expect(db.adminApp.workspaces.find((w) => w.id === 'WS-2207')?.salesforceAccountId).toBe(
+      kessler.AccountId,
+    );
+  });
+
   it('flags a deal changed in Salesforce after it was set up, and changes nothing', async () => {
     await runHandoff();
     const halden = await oppNamed('Halden & Co - Add');
@@ -244,5 +260,27 @@ describe('the Salesforce webhook', () => {
     const before = marker();
     await deliverAll();
     expect(writesSince(before)).toEqual([]);
+  }, 30_000);
+});
+
+describe('the start date', () => {
+  it('switches the workspace to the plan on the start date, not before', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-16T09:00:00Z'));
+    await runHandoff();
+    const workspace = (name: string) => readDb().adminApp.workspaces.find((w) => w.name === name);
+    const subscriptionOf = (name: string) =>
+      readDb().adminApp.subscriptions.find((s) => s.workspaceId === workspace(name)?.id);
+
+    expect(workspace('Fjordline Media')?.plan).toBe('Enterprise'); // starts 16 Nov
+    expect(workspace('Nordlys Energi')?.plan).toBe('Enterprise'); // starts 15 Nov
+    expect(workspace('Torvik Bygg')?.plan).toBe('Free'); // starts 20 Nov
+    expect(subscriptionOf('Torvik Bygg')?.status).toBe('Scheduled');
+
+    vi.setSystemTime(new Date('2026-11-20T09:00:00Z'));
+    const summary = await runHandoff();
+    expect(summary.setUp).toEqual([]);
+    expect(workspace('Torvik Bygg')?.plan).toBe('Enterprise');
+    expect(subscriptionOf('Torvik Bygg')?.status).toBe('Active');
   }, 30_000);
 });

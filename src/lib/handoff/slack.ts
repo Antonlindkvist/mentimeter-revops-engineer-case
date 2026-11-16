@@ -151,9 +151,12 @@ export async function sendDigest(): Promise<DigestSummary> {
     }
   };
 
+  const reached = new Set<string>();
   for (const inbox of buildInboxes(board, revops)) {
     try {
-      await deliver(await slackId(inbox.email), inbox.name, directMessage(inbox));
+      const to = await slackId(inbox.email);
+      reached.add(to);
+      await deliver(to, inbox.name, directMessage(inbox));
     } catch (error) {
       summary.failed.push({
         to: inbox.name,
@@ -162,5 +165,10 @@ export async function sendDigest(): Promise<DigestSummary> {
     }
   }
   await deliver('#finance-billing', '#finance-billing', await financeSummary(board, mention));
+  // Someone whose list is now empty gets no message, but if a problem comes
+  // back later it must reach them again
+  for (const to of Object.keys(state.slack)) {
+    if (to.startsWith('U') && !reached.has(to) && state.slack[to] !== '') recordSlack(to, '');
+  }
   return summary;
 }

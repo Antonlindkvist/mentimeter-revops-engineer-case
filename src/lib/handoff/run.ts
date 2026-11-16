@@ -12,8 +12,8 @@
  */
 import { adminApp, kleer, salesforce, stripe } from '@/lib/connectors';
 import type { FieldValue } from '@/lib/systems/types';
-import { type DealView, type Group, loadDeal } from './board';
-import { listHandoffDeals, loadShared, type Shared } from './context';
+import { type DealView, type Group, isDue, loadDeal } from './board';
+import { listHandoffDeals, loadShared, type Shared, systemToday } from './context';
 import {
   doneRef,
   readState,
@@ -54,10 +54,14 @@ export async function runHandoff(onlyOppId?: string): Promise<RunSummary> {
   const summary: RunSummary = { looked: ids.length, setUp: [], failed: [] };
   for (const id of ids) {
     const view = await loadDeal(id, shared);
-    if (view.group === 'ready' || view.group === 'failed') {
+    const started = view.steps.some((s) => s.record?.status === 'done');
+    const isNew = view.group === 'failed' || (view.group === 'ready' && !started);
+    // Deals already set up still run when a scheduled step is due (the start date)
+    const due = view.steps.some((s) => isDue(s, systemToday()));
+    if (view.group !== 'blocked' && view.group !== 'skipped' && (isNew || due)) {
       try {
         await executeDeal(view, shared);
-        summary.setUp.push(view.evaluation.name);
+        if (isNew) summary.setUp.push(view.evaluation.name);
       } catch (error) {
         summary.failed.push({ name: view.evaluation.name, error: errorMessage(error) });
       }
@@ -156,7 +160,7 @@ async function executeDeal(view: DealView, shared: Shared) {
     });
   }
 
-  await step(oppId, 'subscription', async () => {
+  const subscriptionId = await step(oppId, 'subscription', async () => {
     const sub = plan.subscription;
     if (sub.action === 'update') {
       await adminApp.updateSubscription(sub.subscriptionId, {
@@ -187,6 +191,23 @@ async function executeDeal(view: DealView, shared: Shared) {
     });
     return created.id;
   });
+
+  // The customer gets the plan on the start date (Lea), not before billing is set up (Tom)
+  const sub = plan.subscription;
+  if (sub.action === 'create' && plan.workspacePlan && sub.startDate <= systemToday()) {
+    const workspacePlan = plan.workspacePlan;
+    await step(oppId, 'activate', async () => {
+      const current = await adminApp.getSubscription(subscriptionId);
+      if (current.status === 'Scheduled') {
+        await adminApp.updateSubscription(subscriptionId, { status: 'Active' });
+      }
+      const workspace = await adminApp.getWorkspace(workspaceId);
+      if (workspace.plan !== workspacePlan) {
+        await adminApp.updateWorkspace(workspaceId, { plan: workspacePlan });
+      }
+      return workspacePlan;
+    });
+  }
 
   // Keep the account linked to what it now has, so the next deal finds it
   const account = await salesforce.getAccount(accountId);
