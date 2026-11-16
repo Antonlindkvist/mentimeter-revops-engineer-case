@@ -27,6 +27,8 @@ export interface DealView {
   group: Group;
   steps: StepView[];
   closeDate: string;
+  /** The billing fields as they are now, to notice changes after set-up */
+  fingerprint: string;
 }
 
 /** The fields that decide what gets billed. If they change after set-up, a human looks. */
@@ -156,7 +158,13 @@ export function judge(ctx: DealContext, record: DealRecord | undefined): DealVie
   const steps: StepView[] = evaluation.plan
     ? planSteps(evaluation.plan).map((s) => ({ ...s, record: record?.steps[s.name] }))
     : [];
-  return { evaluation, group: groupOf(evaluation, steps), steps, closeDate: ctx.opp.CloseDate };
+  return {
+    evaluation,
+    group: groupOf(evaluation, steps),
+    steps,
+    closeDate: ctx.opp.CloseDate,
+    fingerprint: fingerprint(ctx.opp),
+  };
 }
 
 function groupOf(evaluation: Evaluation, steps: StepView[]): Group {
