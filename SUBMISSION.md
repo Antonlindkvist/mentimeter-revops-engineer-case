@@ -199,8 +199,7 @@ About 4 hours:
   build
 - ~30 min: building it in seven small, tested commits
 - ~25 min: walking through the build myself, and the fixes from the double-check
-- ~2 h: the demo video: recording it, checking it frame by frame, and the two fixes it found
-- ~30 min: the voice-over and this file
+- ~2.5 h: the demo video: recording it, checking it frame by frame, and the two fixes it found
 
 ## Video
 
