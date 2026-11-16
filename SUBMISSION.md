@@ -165,7 +165,7 @@ Your first prompt, pasted as you wrote it:
 everything first, explain the task, go through all 18 deals against R1–R8, give me options, and
 let me decide. I chose the direction (Kim and the reps, clean deals automatic, problems routed to
 one person). I went through its recommendations for the ambiguous cases, accepted them, and had it
-write them into a build prompt (in the same file). It built in seven small commits with tests and
+write them into a build prompt. It built in seven small commits with tests and
 ran `npm run check` before every push. I walked through the build in the app myself, then asked it
 to double-check everything against the data before recording the demo.
 
@@ -200,7 +200,7 @@ About 4 hours:
 - ~30 min: building it in seven small, tested commits
 - ~25 min: walking through the build myself, and the fixes from the double-check
 - ~2 h: the demo video: recording it, checking it frame by frame, and the two fixes it found
-- ~30 min [EDIT]: the voice-over and this file
+- ~30 min: the voice-over and this file
 
 ## Video
 
